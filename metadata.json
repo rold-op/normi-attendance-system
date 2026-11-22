@@ -1,0 +1,6 @@
+{
+  "name": "EdTech Room RFID Attendance System",
+  "description": "Real-time RFID attendance management dashboard for monitoring student school ID taps from ESP32 hardware terminals connected via the MIS mesh network.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

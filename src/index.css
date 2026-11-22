@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+/* -------------------------------------------------------------
+ * Geist Font Family Setup (Self-Hosted, Offline-Ready LAN Asset)
+ * ------------------------------------------------------------- */
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Geist Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  --primary: #1E5628;
+  --primary-hover: #16421E;
+  --primary-soft: #EAF2EC;
+  --accent-gold: #F5A61C;
+  --background: #F4F6F4;
+  --card: #FFFFFF;
+  --border: #E5E9E5;
+  --foreground: #0F172A;
+  --muted-foreground: #64748B;
+  --danger: #DC2626;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--foreground);
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Apple-style minimalist card elevation with hairline separation */
+.normi-card {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.055);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02), 0 4px 16px -2px rgba(30, 86, 40, 0.035);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.normi-divider-strong {
+  border-color: rgba(30, 86, 40, 0.16);
+}
+
+.normi-row-divider > :not([hidden]) ~ :not([hidden]) {
+  border-top: 1px solid rgba(0, 0, 0, 0.045);
+}
+
+/* Apple-style physical tactile press interaction */
+.apple-press {
+  transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.apple-press:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+@keyframes login-card-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(-6px);
+  }
+  36% {
+    transform: translateX(5px);
+  }
+  54% {
+    transform: translateX(-4px);
+  }
+  72% {
+    transform: translateX(3px);
+  }
+  88% {
+    transform: translateX(-1px);
+  }
+}
+
+.animate-login-shake {
+  animation: login-card-shake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-press,
+  .apple-press:active {
+    transform: none !important;
+    transition: none !important;
+  }
+  .animate-login-shake {
+    animation: none !important;
+  }
+}
+
+/* Print-ready PDF institutional report rules */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 14mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}

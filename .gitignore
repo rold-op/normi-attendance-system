@@ -1,0 +1,26 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Local databases & uploads
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# IDE & agent local caches
+.agent/
+.agents/
+.gemini/
+.claude/
+.qoder/
+.impeccable/
+.playwright/
+.playwright-cli/
+public/test-screenshots/
+
