@@ -35,7 +35,7 @@ import type {
   YearLevel,
 } from '../types/normi';
 
-const STORAGE_KEY = 'normi_attendance_system_v4_clean';
+const STORAGE_KEY = 'normi_attendance_system_v5_clean';
 
 interface PersistedNormiState {
   colleges: College[];
@@ -265,87 +265,66 @@ function getNextSequentialId(items: { id: string }[]): string {
 function loadState(): PersistedNormiState {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      // Force initial total wipe of any lingering operational records
-      if (!localStorage.getItem('normi_purge_v4_executed')) {
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-          const k = localStorage.key(i);
-          if (k && k.includes('normi')) {
+      // Purge all legacy storage keys from previous builds & seeds
+      const legacyKeys = [
+        'normi_attendance_system_v1',
+        'normi_attendance_system_prod_v1',
+        'normi_attendance_system_v2_clean',
+        'normi_attendance_system_v4_clean',
+        'normi_attendance_system_demo',
+        'normi_purge_v4_executed',
+      ];
+      legacyKeys.forEach((k) => localStorage.removeItem(k));
+
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (
+          k &&
+          (k.startsWith('normi_attendance_system_v') ||
+            k.includes('normi_purge') ||
+            k.includes('normi_demo'))
+        ) {
+          if (k !== STORAGE_KEY) {
             localStorage.removeItem(k);
           }
         }
-        return {
-          colleges: [],
-          rooms: [],
-          devices: [],
-          students: [],
-          schedules: [],
-          accessLogs: [],
-          overrides: {},
-          offlineBuffers: [],
-        };
       }
 
-      // Strictly purge all legacy and pre-seeded mock storage keys
-      localStorage.removeItem('normi_attendance_system_v1');
-      localStorage.removeItem('normi_attendance_system_prod_v1');
-      localStorage.removeItem('normi_attendance_system_v2_clean');
-      localStorage.removeItem('normi_attendance_system_demo');
-
-      // Scan all localStorage keys to remove any cached state containing dummy student/schedule data
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('normi_')) {
-          const val = localStorage.getItem(k);
-          if (
-            val &&
-            (val.includes('Althea') ||
-              val.includes('CIT-LAB1') ||
-              val.includes('2024-00104') ||
-              val.includes('Web Systems & Technologies') ||
-              val.includes('EDTECH-01') ||
-              val.includes('Marco Paolo'))
-          ) {
-            keysToRemove.push(k);
-          }
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as PersistedNormiState;
+        if (
+          Array.isArray(parsed.colleges) &&
+          Array.isArray(parsed.rooms) &&
+          Array.isArray(parsed.devices) &&
+          Array.isArray(parsed.students) &&
+          Array.isArray(parsed.schedules) &&
+          Array.isArray(parsed.accessLogs)
+        ) {
+          return {
+            colleges: parsed.colleges,
+            rooms: parsed.rooms,
+            devices: parsed.devices,
+            students: parsed.students,
+            schedules: parsed.schedules,
+            accessLogs: parsed.accessLogs,
+            overrides: parsed.overrides ?? {},
+            offlineBuffers: Array.isArray(parsed.offlineBuffers) ? parsed.offlineBuffers : [],
+          };
         }
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-    }
-    const raw = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem(STORAGE_KEY) : null;
-    if (raw) {
-      const parsed = JSON.parse(raw) as PersistedNormiState;
-      if (
-        Array.isArray(parsed.colleges) &&
-        Array.isArray(parsed.rooms) &&
-        Array.isArray(parsed.devices) &&
-        Array.isArray(parsed.students) &&
-        Array.isArray(parsed.schedules) &&
-        Array.isArray(parsed.accessLogs)
-      ) {
-        return {
-          colleges: parsed.colleges,
-          rooms: parsed.rooms,
-          devices: parsed.devices,
-          students: parsed.students,
-          schedules: parsed.schedules,
-          accessLogs: parsed.accessLogs,
-          overrides: parsed.overrides ?? {},
-          offlineBuffers: Array.isArray(parsed.offlineBuffers) ? parsed.offlineBuffers : [],
-        };
       }
     }
   } catch {
-    // Fallback to clean NORMI seed data
+    // Fallback to empty state
   }
 
   return {
-    colleges: INITIAL_COLLEGES,
-    rooms: INITIAL_ROOMS,
-    devices: INITIAL_DEVICES,
-    students: INITIAL_STUDENTS,
-    schedules: INITIAL_SCHEDULES,
-    accessLogs: INITIAL_ACCESS_LOGS,
+    colleges: [],
+    rooms: [],
+    devices: [],
+    students: [],
+    schedules: [],
+    accessLogs: [],
     overrides: {},
     offlineBuffers: [],
   };
@@ -370,55 +349,33 @@ export function NormiProvider({ children }: { children: React.ReactNode }) {
     new Set(initial.devices.filter((d) => d.status === 'offline').map((d) => d.deviceUid))
   );
 
-  // Forced operational database purge for production deployment (clears lingering HMR & browser memory)
+  // Hard purge check on mount to ensure zero stale mock items exist in user's browser
   useEffect(() => {
-    const PURGE_FLAG = 'normi_purge_v4_executed';
     if (typeof window !== 'undefined' && window.localStorage) {
-      if (!localStorage.getItem(PURGE_FLAG)) {
-        setColleges([]);
-        setRooms([]);
-        setDevices([]);
-        setStudents([]);
-        setSchedules([]);
-        setAccessLogs([]);
-        setOverrides({});
-        setOfflineBuffers([]);
-
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-          const k = localStorage.key(i);
-          if (k && (k.startsWith('normi_') || k.includes('normi')) && k !== PURGE_FLAG) {
-            localStorage.removeItem(k);
-          }
-        }
-        localStorage.setItem(PURGE_FLAG, 'true');
-      }
+      const legacyKeys = [
+        'normi_attendance_system_v1',
+        'normi_attendance_system_prod_v1',
+        'normi_attendance_system_v2_clean',
+        'normi_attendance_system_v4_clean',
+        'normi_attendance_system_demo',
+        'normi_purge_v4_executed',
+      ];
+      legacyKeys.forEach((k) => localStorage.removeItem(k));
     }
   }, []);
 
-  // Sync operational state from MySQL backend if available
+  // Sync operational state directly from MySQL backend
   useEffect(() => {
     fetch('/api/operational/state')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.state) {
-          if (Array.isArray(data.state.colleges) && data.state.colleges.length > 0) {
-            setColleges(data.state.colleges);
-          }
-          if (Array.isArray(data.state.rooms) && data.state.rooms.length > 0) {
-            setRooms(data.state.rooms);
-          }
-          if (Array.isArray(data.state.devices) && data.state.devices.length > 0) {
-            setDevices(data.state.devices);
-          }
-          if (Array.isArray(data.state.students) && data.state.students.length > 0) {
-            setStudents(data.state.students);
-          }
-          if (Array.isArray(data.state.schedules) && data.state.schedules.length > 0) {
-            setSchedules(data.state.schedules);
-          }
-          if (Array.isArray(data.state.accessLogs) && data.state.accessLogs.length > 0) {
-            setAccessLogs(data.state.accessLogs);
-          }
+          setColleges(Array.isArray(data.state.colleges) ? data.state.colleges : []);
+          setRooms(Array.isArray(data.state.rooms) ? data.state.rooms : []);
+          setDevices(Array.isArray(data.state.devices) ? data.state.devices : []);
+          setStudents(Array.isArray(data.state.students) ? data.state.students : []);
+          setSchedules(Array.isArray(data.state.schedules) ? data.state.schedules : []);
+          setAccessLogs(Array.isArray(data.state.accessLogs) ? data.state.accessLogs : []);
         }
       })
       .catch(() => {});
@@ -1359,14 +1316,18 @@ export function NormiProvider({ children }: { children: React.ReactNode }) {
     setOfflineBuffers([]);
     fetch('/api/operational/purge', { method: 'POST' }).catch(() => {});
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem('normi_attendance_system_v1');
-      localStorage.removeItem('normi_attendance_system_prod_v1');
-      localStorage.removeItem('normi_attendance_system_demo');
       const toRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('normi_')) toRemove.push(k);
+        if (
+          k &&
+          (k.startsWith('normi_') || k.includes('normi')) &&
+          k !== 'normi_attendance_auth_token' &&
+          k !== 'normi_attendance_user' &&
+          k !== 'normi_theme'
+        ) {
+          toRemove.push(k);
+        }
       }
       toRemove.forEach((k) => localStorage.removeItem(k));
     }
